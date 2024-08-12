@@ -7,6 +7,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Check out
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        lfs: true
+
     - name: Docker login
       uses: azure/docker-login@v1
       with:
