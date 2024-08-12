@@ -17,6 +17,6 @@ jobs:
 
     - name: Publish docker image
       run: |
-        docker build -t cr.kruhlmann.dev/emotelib:latest -f Dockerfile .
+        docker build -t cr.kruhlmann.dev/emotelib:latest .
         docker push cr.kruhlmann.dev/emotelib
       if: github.ref == 'refs/heads/master'
