@@ -97,7 +97,7 @@ void process_image(const char *url, const char *filepath,
   }
 
   char command[512];
-  snprintf(command, sizeof(command), "magick %s %s", filepath, output_file);
+  snprintf(command, sizeof(command), "convert %s %s", filepath, output_file);
 
   int result = system(command);
   if (result != 0) {
