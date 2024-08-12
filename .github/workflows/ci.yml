@@ -1,0 +1,19 @@
+name: OCaml CI
+
+on: [push, pull_request]
+
+jobs:
+  build-and-test:
+    - name: Docker login
+      uses: azure/docker-login@v1
+      with:
+        login-server: cr.kruhlmann.dev
+        username: ${{ secrets.DOCKER_USER }}
+        password: ${{ secrets.DOCKER_TOKEN }}
+      if: github.ref == 'refs/heads/master'
+
+    - name: Publish docker image
+      run: |
+        docker build -t cr.kruhlmann.dev/emotelib:latest -f Dockerfile .
+        docker push cr.kruhlmann.dev/emotelib
+      if: github.ref == 'refs/heads/master'
