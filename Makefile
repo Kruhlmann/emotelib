@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -O2
-LIBS = $(shell pkg-config --libs libcurl gdlib libcrypto libssl)
+LIBS = $(shell pkg-config --libs libcurl libcrypto libssl)
 TARGET = main
 
 all: $(TARGET)
