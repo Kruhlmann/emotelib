@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     imagemagick \
     libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -s /home/$USERNAME/main /usr/local/bin/emotelib
 WORKDIR /home/$USERNAME
 COPY . .
 RUN make
