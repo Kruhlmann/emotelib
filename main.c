@@ -220,7 +220,7 @@ void handle_client(int new_socket, const char *output_dir) {
   close(new_socket);
 }
 
-int main(int argc, char const *argv[]) {
+int main() {
   const char *config_path = "/opt/config.txt";
   const char *output_dir = "emotes";
 
