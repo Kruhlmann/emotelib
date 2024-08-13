@@ -1,4 +1,5 @@
 #include <curl/curl.h>
+#include <dirent.h>
 #include <libgen.h>
 #include <netinet/in.h>
 #include <openssl/md5.h>
@@ -130,6 +131,32 @@ void load_config_and_process_images(const char *config_path,
   fclose(config_file);
 }
 
+char *generate_index_page(const char *output_dir) {
+  char *html = malloc(10240);
+  strcpy(html, "<html><head><title>Image "
+               "Gallery</title></head><body><h1>Available Images</h1><ul>");
+
+  DIR *dir;
+  struct dirent *ent;
+  if ((dir = opendir(output_dir)) != NULL) {
+    while ((ent = readdir(dir)) != NULL) {
+      if (ent->d_type == DT_REG) {
+        strcat(html, "<li><a href='");
+        strcat(html, ent->d_name);
+        strcat(html, "'>");
+        strcat(html, ent->d_name);
+        strcat(html, "</a></li>");
+      }
+    }
+    closedir(dir);
+  } else {
+    perror("Failed to read directory");
+  }
+
+  strcat(html, "</ul></body></html>");
+  return html;
+}
+
 void handle_client(int new_socket, const char *output_dir) {
   char buffer[BUFFER_SIZE] = {0};
   read(new_socket, buffer, BUFFER_SIZE);
@@ -137,43 +164,56 @@ void handle_client(int new_socket, const char *output_dir) {
   char *method = strtok(buffer, " ");
   char *path = strtok(NULL, " ");
 
-  if (method && path && strcmp(method, "GET") == 0) {
-    char file_path[256];
-    snprintf(file_path, sizeof(file_path), "%s%s", output_dir, path);
-
-    FILE *file = fopen(file_path, "rb");
-    if (file) {
-      struct stat st;
-      stat(file_path, &st);
-      int file_size = st.st_size;
-
-      const char *content_type = "image/gif";
-
+  if (method && strcmp(method, "GET") == 0) {
+    if (strcmp(path, "/") == 0) {
+      char *index_page = generate_index_page(output_dir);
       char response_header[BUFFER_SIZE];
       snprintf(response_header, sizeof(response_header),
                "HTTP/1.1 200 OK\r\n"
-               "Content-Type: %s\r\n"
-               "Content-Length: %d\r\n"
+               "Content-Type: text/html\r\n"
+               "Content-Length: %zu\r\n"
                "Connection: close\r\n\r\n",
-               content_type, file_size);
+               strlen(index_page));
 
       send(new_socket, response_header, strlen(response_header), 0);
-
-      char file_buffer[BUFFER_SIZE];
-      size_t bytes_read;
-      while ((bytes_read = fread(file_buffer, 1, sizeof(file_buffer), file)) >
-             0) {
-        send(new_socket, file_buffer, bytes_read, 0);
-      }
-
-      fclose(file);
+      send(new_socket, index_page, strlen(index_page), 0);
+      free(index_page);
     } else {
-      const char *not_found_response =
-          "HTTP/1.1 404 Not Found\r\n"
-          "Content-Type: text/html\r\n"
-          "Connection: close\r\n\r\n"
-          "<html><body><h1>404 Not Found</h1></body></html>";
-      send(new_socket, not_found_response, strlen(not_found_response), 0);
+      char file_path[256];
+      snprintf(file_path, sizeof(file_path), "%s%s", output_dir, path);
+
+      FILE *file = fopen(file_path, "rb");
+      if (file) {
+        struct stat st;
+        stat(file_path, &st);
+        int file_size = st.st_size;
+
+        char response_header[BUFFER_SIZE];
+        snprintf(response_header, sizeof(response_header),
+                 "HTTP/1.1 200 OK\r\n"
+                 "Content-Type: %s\r\n"
+                 "Content-Length: %d\r\n"
+                 "Connection: close\r\n\r\n",
+                 "image/gif", file_size);
+
+        send(new_socket, response_header, strlen(response_header), 0);
+
+        char file_buffer[BUFFER_SIZE];
+        size_t bytes_read;
+        while ((bytes_read = fread(file_buffer, 1, sizeof(file_buffer), file)) >
+               0) {
+          send(new_socket, file_buffer, bytes_read, 0);
+        }
+
+        fclose(file);
+      } else {
+        const char *not_found_response =
+            "HTTP/1.1 404 Not Found\r\n"
+            "Content-Type: text/html\r\n"
+            "Connection: close\r\n\r\n"
+            "<html><body><h1>404 Not Found</h1></body></html>";
+        send(new_socket, not_found_response, strlen(not_found_response), 0);
+      }
     }
   }
 
