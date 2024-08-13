@@ -6,7 +6,6 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
     libcurl4-openssl-dev \
-    libgd-dev \
     imagemagick \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/* \
