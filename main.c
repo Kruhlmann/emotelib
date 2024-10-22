@@ -66,7 +66,7 @@ int download_image(const char *url, const char *output_path) {
   res = curl_easy_perform(curl_handle);
 
   if (res != CURLE_OK) {
-    fprintf(stderr, "curl_easy_perform() failed: %s\n",
+    fprintf(stderr, "curl_easy_perform() failed on %s: %s\n", url,
             curl_easy_strerror(res));
     curl_easy_cleanup(curl_handle);
     free(chunk.memory);
